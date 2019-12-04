@@ -100,10 +100,137 @@ var WatcherMorph;
 var StagePrompterMorph;
 var Note;
 var SpriteHighlightMorph;
+// <PSNAP>
+var DatastoreMorph;
+var FileIconMorph;
+// </PSNAP
 
 function isSnapObject(thing) {
     return thing instanceof SpriteMorph || (thing instanceof StageMorph);
 }
+
+// <PSNAP>
+//DatastoreMorph /////////////////////////////////////////////////////
+
+/*
+    I am DatastoreMorph, like WardrobeMorph, but for data
+*/
+
+// DatastoreMorph instance creation
+
+DatastoreMorph.prototype = new ScrollFrameMorph();
+DatastoreMorph.prototype.constructor = DatastoreMorph;
+DatastoreMorph.uber = ScrollFrameMorph.prototype;
+
+function DatastoreMorph(aSprite, sliderColor) {
+    this.init(aSprite, sliderColor);
+}
+
+DatastoreMorph.prototype.init = function (aSprite, sliderColor) {
+    // additional properties
+    this.sprite = aSprite || new SpriteMorph();
+    this.costumesVersion = null;
+    this.spriteVersion = null;
+
+    // initialize inherited properties
+    DatastoreMorph.uber.init.call(this, null, null, sliderColor);
+
+    // configure inherited properties
+    this.acceptsDrops = false;
+    this.fps = 2;
+    this.updateList();
+};
+
+// Data updating
+
+DatastoreMorph.prototype.updateList = function () {
+    var myself = this,
+        x = this.left() + 5,
+        y = this.top() + 5,
+        padding = 4,
+        oldFlag = Morph.prototype.trackChanges,
+        icon,
+        template,
+        txt;
+
+    this.changed();
+    oldFlag = Morph.prototype.trackChanges;
+    Morph.prototype.trackChanges = false;
+	
+    this.contents.destroy();
+    this.contents = new FrameMorph(this);
+    this.contents.acceptsDrops = false;
+    this.contents.reactToDropOf = function (icon) {
+        myself.reactToDropOf(icon);
+    };
+    this.addBack(this.contents);
+
+    txt = new TextMorph(localize(
+        'import data from your computer\nby dragging the file into here'
+    ));
+    txt.fontSize = 9;
+    txt.setColor(SpriteMorph.prototype.paletteTextColor);
+    txt.setPosition(new Point(x, y));
+    this.addContents(txt);
+    y = txt.bottom() + padding;
+
+    this.sprite.dataFiles.asArray().forEach(function (file) {
+        template = icon = new FileIconMorph(file, template);
+        icon.setPosition(new Point(x, y));
+        myself.addContents(icon);
+        y = icon.bottom() + padding;
+    });
+
+    Morph.prototype.trackChanges = oldFlag;
+    this.changed();
+
+    this.updateSelection();
+};
+
+DatastoreMorph.prototype.updateSelection = function () {
+    this.contents.children.forEach(function (morph) {
+        if (morph.refresh) {morph.refresh(); }
+    });
+    this.spriteVersion = this.sprite.version;
+};
+
+// Data stepping
+
+/*
+DatastoreMorph.prototype.step = function () {
+    if (this.spriteVersion !== this.sprite.version) {
+        this.updateSelection();
+    }
+};
+*/
+
+// Data ops
+
+DatastoreMorph.prototype.removeFile = function (idx) {
+    this.sprite.dataFiles.remove(idx);
+    this.updateList();
+};
+
+// Data drag & drop
+DatastoreMorph.prototype.wantsDropOf = function (morph) {
+    return morph instanceof SoundIconMorph;
+};
+
+DatastoreMorph.prototype.reactToDropOf = function (icon) {
+    var idx = 0,
+        costume = icon.object,
+        top = icon.top();
+
+    icon.destroy();
+    this.contents.children.forEach(function (item) {
+        if (item.top() < top - 4) {
+            idx += 1;
+        }
+    });
+    this.sprite.dataFiles.add(costume, idx);
+    this.updateList();
+};
+// <PSNAP>
 
 // SpriteMorph /////////////////////////////////////////////////////////
 
@@ -1659,6 +1786,7 @@ SpriteMorph.prototype.init = function (globals) {
     this.costumes = new List();
     this.costumes.type = 'costume';
     this.costume = null;
+    this.dataFiles = new List(); // PSNAP
     this.sounds = new List();
     this.sounds.type = 'sound';
     this.normalExtent = new Point(60, 60); // only for costume-less situation
@@ -3622,6 +3750,12 @@ SpriteMorph.prototype.doSwitchToCostume = function (id, noShadow) {
 SpriteMorph.prototype.reportCostumes = function () {
     return this.costumes;
 };
+
+// <PSNAP>
+SpriteMorph.prototype.addDataFile = function (aFile) {
+	this.dataFiles.add(aFile);
+}
+// </PSNAP>
 
 // SpriteMorph sound management
 

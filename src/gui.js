@@ -95,6 +95,7 @@ var StageHandleMorph;
 var PaletteHandleMorph;
 var CamSnapshotDialogMorph;
 var SoundRecorderDialogMorph;
+var FileIconMorph; // PSNAP
 
 // IDE_Morph ///////////////////////////////////////////////////////////
 
@@ -1582,6 +1583,27 @@ IDE_Morph.prototype.createSpriteBar = function () {
     tab.labelColor = this.buttonLabelColor;
     tab.fixLayout();
     tabBar.add(tab);
+	
+	// <PSNAP>
+	tab = new TabMorph(
+        tabColors,
+        null, // target
+        function () {tabBar.tabTo('data'); },
+        localize('Data'), // label
+        function () {  // query
+            return myself.currentTab === 'data';
+        }
+    );
+    tab.padding = 3;
+    tab.corner = tabCorner;
+    tab.edge = 1;
+    tab.labelShadowOffset = new Point(-1, -1);
+    tab.labelShadowColor = tabColors[1];
+    tab.labelColor = this.buttonLabelColor;
+    tab.drawNew();
+    tab.fixLayout();
+    tabBar.add(tab);
+	// </PSNAP>
 
     tabBar.fixLayout();
     tabBar.children.forEach(each =>
@@ -4892,6 +4914,16 @@ IDE_Morph.prototype.rawOpenScriptString = function (str) {
         2
     );
 };
+
+// <PSNAP>
+IDE_Morph.prototype.droppedData = function (aFile) {
+	// REVISIT: File icon doesn't show up in tab
+    this.currentSprite.addDataFile(aFile);
+    this.spriteBar.tabBar.tabTo('data');
+    console.log("Received data file " + aFile.name);
+    console.log("File size " + aFile.size);
+}
+// </PSNAP>
 
 IDE_Morph.prototype.openDataString = function (str, name, type) {
     var msg;
@@ -8284,6 +8316,158 @@ SpriteIconMorph.prototype.fixLayout = function () {
         this.thumbnail.bottom() + this.padding
     );
 };
+
+// <PSNAP>
+//FileIconMorph ///////////////////////////////////////////////////////
+
+/*
+ I am an element in the SpriteEditor's "Data" tab.
+*/
+
+//FileIconMorph inherits from ToggleButtonMorph (Widgets)
+//... and copies methods from SpriteIconMorph
+
+FileIconMorph.prototype = new ToggleButtonMorph();
+FileIconMorph.prototype.constructor = FileIconMorph;
+FileIconMorph.uber = ToggleButtonMorph.prototype;
+
+//FileIconMorph settings
+
+FileIconMorph.prototype.thumbSize = new Point(80, 30);
+FileIconMorph.prototype.labelShadowOffset = null;
+FileIconMorph.prototype.labelShadowColor = null;
+FileIconMorph.prototype.labelColor = new Color(255, 255, 255);
+FileIconMorph.prototype.fontSize = 12;
+
+//FileIconMorph instance creation:
+
+function FileIconMorph(aFile, aTemplate) {
+	this.init(aFile, aTemplate);
+}
+
+FileIconMorph.prototype.init = function (aFile, aTemplate) {
+    var colors, action, query;
+
+    if (!aTemplate) {
+        colors = [
+            IDE_Morph.prototype.groupColor,
+            IDE_Morph.prototype.frameColor,
+            IDE_Morph.prototype.frameColor
+        ];
+    }
+
+    action = function () {
+        nop(); // When I am selected (which is never the case for sounds)
+    };
+
+    query = function () {
+        return false;
+    };
+
+    // additional properties:
+    this.object = aFile; // mandatory, actually
+    this.version = this.object.version;
+    this.thumbnail = null;
+
+    // initialize inherited properties:
+    FileIconMorph.uber.init.call(
+        this,
+        colors, // color overrides, <array>: [normal, highlight, pressed]
+        null, // target - not needed here
+        action, // a toggle function
+        this.object.name, // label string
+        query, // predicate/selector
+        null, // environment
+        null, // hint
+        aTemplate // optional, for cached background images
+    );
+
+    // override defaults and build additional components
+    this.isDraggable = true;
+    this.createThumbnail();
+    this.padding = 2;
+    this.corner = 8;
+    this.fixLayout();
+    this.fps = 1;
+};
+
+FileIconMorph.prototype.createThumbnail = function () {
+    var label;
+
+    if (this.thumbnail) {
+        this.thumbnail.destroy();
+    }
+
+    this.thumbnail = new Morph();
+    this.thumbnail.setExtent(this.thumbSize);
+    this.add(this.thumbnail);
+
+    label = new StringMorph(
+        this.createInfo(),
+        '12',
+        '',
+        true,
+        false,
+        false,
+        this.labelShadowOffset,
+        this.labelShadowColor,
+        new Color(200, 200, 200)
+    );
+
+    this.thumbnail.add(label);
+    label.setCenter(new Point(40, 15));
+};
+
+FileIconMorph.prototype.createInfo = function () {
+    var siz = Math.round(this.object.size || 0);
+
+    return siz.toString() + " bytes";
+};
+
+FileIconMorph.prototype.createLabel = SpriteIconMorph.prototype.createLabel;
+
+//FileIconMorph layout
+
+FileIconMorph.prototype.fixLayout = SpriteIconMorph.prototype.fixLayout;
+
+
+//FileIconMorph menu
+
+FileIconMorph.prototype.userMenu = function () {
+	var menu = new MenuMorph(this);
+
+	if (!(this.object instanceof File)) { return null; }
+
+	menu.addItem('view', 'viewFile');
+	menu.addItem('delete', 'removeFile');
+
+	return menu;
+};
+
+FileIconMorph.prototype.removeFile = function () {
+	var datastore = this.parentThatIsA(DatastoreMorph),
+		idx = this.parent.children.indexOf(this);
+	
+	datastore.removeFile(idx);
+};
+
+FileIconMorph.prototype.viewFile = function () {
+/*	var aFile = this.object,
+		frd = new FileReader(),
+		CHUNK, // check file size and
+		blob,
+		header;
+
+	blob = aFile.slice(0, CHUNK);
+	frd.onloadend = function (e) {
+		if (e.target.readyState == FileReader.DONE) {
+			header = e.target.result;
+			// open viewer on header
+		}
+	};
+	frd.readAsText(blob);*/
+};
+// </PSNAP>
 
 // SpriteIconMorph menu
 

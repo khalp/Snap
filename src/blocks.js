@@ -189,6 +189,7 @@ var CommentMorph;
 var ArgLabelMorph;
 var TextSlotMorph;
 var ScriptFocusMorph;
+var DatastoreMorph; // PSNAP
 
 // SyntaxElementMorph //////////////////////////////////////////////////
 
