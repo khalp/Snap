@@ -1452,6 +1452,11 @@ SpriteMorph.prototype.initBlocks = function () {
 			spec: 'read next %n lines of file into %l',
 			defaults: [10]
 		},
+		endOfFile: {
+			type: 'reporter',
+			category: 'lists',
+			spec: 'eof'
+		},
 		// </PSNAP>
 
         // numbers - (arrayed when hyper-blocks is on, otherwise linked)
@@ -2818,7 +2823,10 @@ SpriteMorph.prototype.blockTemplates = function (category) {
         blocks.push(block('doDeleteFromList'));
         blocks.push(block('doInsertInList'));
         blocks.push(block('doReplaceInList'));
-		blocks.push(block('readNext')); // PSNAP
+		// <PSNAP>
+		blocks.push(block('readNext'));
+		blocks.push(block('endOfFile'));
+		// </PSNAP>
 
     // for debugging: ///////////////
 
@@ -3697,6 +3705,16 @@ SpriteMorph.prototype.readNext = function(numLines, list) {
 		ide.droppedText(output, 'input', file.type);
 		globals.setVar(vName, offset);
 	}
+}
+
+SpriteMorph.prototype.endOfFile = function() {
+	var globals = this.globalVariables(),
+	vName = 'file pointer',
+	vSize = 'file size',
+	offset = globals.getVar(vName)*1, // Multiply by 1 to make variable numerical type
+	size = globals.getVar(vSize)*1;
+
+	return offset >= size;
 }
 // </PSNAP>
 
