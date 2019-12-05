@@ -4956,14 +4956,27 @@ IDE_Morph.prototype.rawOpenDataString = function (str, name, type) {
     switch (type) {
         case 'csv':
             data = Process.prototype.parseCSV(str);
+			vName = newVarName(name || 'data'); // PSNAP
             break;
         case 'json':
             data = Process.prototype.parseJSON(str);
+			vName = newVarName(name || 'data'); // PSNAP
             break;
-        default: // assume plain text
-            data = str;
+        default:
+			// <PSNAP>
+			// NOTE: Assumes plain text in list format (one data point per line)
+            data = Process.prototype.parseTXT(str);
+
+			// Open data string into the argument variable or a new variable named 'input'
+			if(contains(globals.names(), name)){
+				vName = name;
+			}
+			else {
+				vName = newVarName('input');
+				globals.addVar(vName);
+			}
+			// </PSNAP>
     }
-    vName = newVarName(name || 'data');
     globals.addVar(vName);
     globals.setVar(vName, data);
     this.currentSprite.toggleVariableWatcher(vName, true); // global

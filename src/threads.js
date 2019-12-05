@@ -4174,6 +4174,71 @@ Process.prototype.parseJSON = function (string) {
     return listify(JSON.parse(string));
 };
 
+// <PSNAP>
+// Modified from rawParseCSV
+Process.prototype.parseTXT = function (text) {
+    // parse a text file into a two-dimensional list (assuming for our purposes that
+	// there's one data value per line in the file
+    // if the table contains just a single row return it a one-dimensional
+    // list of fields instead (for backwards-compatibility)
+    var prev = '',
+        fields = [''],
+        records = [fields],
+        col = 0,
+        r = 0,
+        esc = true,
+        len = text.length,
+        idx,
+        char;
+    for (idx = 0; idx < len; idx += 1) {
+        char = text[idx];
+        if (char === '\"') {
+            if (esc && char === prev) {
+                fields[col] += char;
+            }
+            esc = !esc;
+        } else if (char === ',' && esc) {
+            char = '';
+            col += 1;
+            fields[col] = char;
+        } else if (char === '\r' && esc) {
+            r += 1;
+            records[r] = [''];
+            fields = records[r];
+            col = 0;
+        } else if (char === '\n' && esc) {
+            if (prev !== '\r') {
+                r += 1;
+                records[r] = [''];
+                fields = records[r];
+                col = 0;
+            }
+        } else {
+            fields[col] += char;
+        }
+        prev = char;
+    }
+
+    // remove the last record, if it is empty
+    if (records[records.length - 1].length === 1 &&
+            records[records.length - 1][0] === '')
+    {
+        records.pop();
+    }
+
+    // convert arrays to Snap! Lists
+    records = new List(records.map(
+        function (row) {return new List(row); })
+    );
+
+    // for backwards compatibility return the first row if it is the only one
+    if (records.length() === 1) {
+        return records.at(1);
+    }
+    return records;
+};
+// </PSNAP>
+
 // Process debugging
 
 Process.prototype.alert = function (data) {

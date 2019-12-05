@@ -1445,6 +1445,14 @@ SpriteMorph.prototype.initBlocks = function () {
             spec: 'replace item %idx of %l with %s',
             defaults: [1, null, localize('thing')]
         },
+		// <PSNAP>
+		readNext: {
+			type: 'command',
+			category: 'lists',
+			spec: 'read next %n lines of file into %l',
+			defaults: [10]
+		},
+		// </PSNAP>
 
         // numbers - (arrayed when hyper-blocks is on, otherwise linked)
         reportNumbers: {
@@ -2810,6 +2818,7 @@ SpriteMorph.prototype.blockTemplates = function (category) {
         blocks.push(block('doDeleteFromList'));
         blocks.push(block('doInsertInList'));
         blocks.push(block('doReplaceInList'));
+		blocks.push(block('readNext')); // PSNAP
 
     // for debugging: ///////////////
 
@@ -3608,6 +3617,88 @@ SpriteMorph.prototype.deleteVariable = function (varName) {
         ide.refreshPalette();
     }
 };
+
+// <PSNAP>
+// SpriteMorph file management
+
+// Modified from: https://stackoverflow.com/questions/39479090/read-n-lines-of-a-big-text-file
+SpriteMorph.prototype.readNext = function(numLines, list) {
+	var decoder = new TextDecoder('utf-8');
+    var fr = new FileReader();
+
+	var globals = this.globalVariables(),
+	vName = 'file pointer',
+	vSize = 'file size',
+	vFile = 'file',
+	output = '',
+	offset = globals.getVar(vName)*1, // Multiply by 1 to make variable numerical type
+	file = globals.getVar(vFile),
+	ide = this.parentThatIsA(IDE_Morph);
+
+	var CHUNK_SIZE = 1, // Read data in byte by byte
+	data = '',
+	endOfLine = false,
+	line = 0;
+
+	// Limit input (1 <= numLines <= 200)
+	numLines = (numLines  <= 0) ? 1 : (numLines > 200) ? 200 : numLines;
+
+
+    fr.onload = function() {
+        // Use stream:true in case we cut the file
+        // in the middle of a multi-byte character
+		temp = decoder.decode(fr.result, {stream:true});
+
+		if(temp === '\n') {
+			line++;
+			endOfLine = true;
+		}
+		else if (temp !== '\r'){
+			data += temp;
+		}
+
+		if(endOfLine) {
+			output += data;
+			data = '';
+			endOfLine = false;
+
+			if(line < numLines) {
+				output += '\n';
+			}
+		}
+
+		offset += CHUNK_SIZE;
+		seek();
+    };
+    fr.onerror = function() {
+        onComplete(fr.error);
+    };
+
+    seek();
+
+    function seek() {
+        if (line === numLines) {
+            // We found enough lines.
+            onComplete(); // Done.
+            return;
+        }
+        if (offset !== 0 && offset >= file.size) {
+            // We did not find all lines, but there are no more lines.
+            //forEachLine(results); // This is from lines.pop(), before.
+            onComplete(); // Done
+            return;
+        }
+        var slice = file.slice(offset, offset + CHUNK_SIZE);
+        fr.readAsArrayBuffer(slice);
+    }
+	function onComplete() {
+		// REVISIT: variable to store results is hardcoded as 'input' but should be changed
+		// to match the variable passed into the readNext block in the future
+		ide.droppedText(output, 'input', file.type);
+		globals.setVar(vName, offset);
+	}
+}
+// </PSNAP>
 
 // SpriteMorph costume management
 
