@@ -11648,16 +11648,43 @@ HandMorph.prototype.processDrop = function (event) {
         frd.readAsDataURL(aFile);
     }
 
-    function readText(aFile) {
-        var frd = new FileReader();
-        while (!target.droppedText) {
+	function readText(aFile) {
+		var frd = new FileReader(),
+			fileType = aFile.type,
+			name = aFile.name,
+			ext = name ? name.slice(name.lastIndexOf('.') + 1).toLowerCase() : '';
+
+		while (!target.droppedText) {
             target = target.parent;
         }
-        frd.onloadend = (e) => {
-            target.droppedText(e.target.result, aFile.name, aFile.type);
+        frd.onloadend = function (e) {
+            target.droppedText(e.target.result, name, fileType);
         };
-        frd.readAsText(aFile);
-    }
+
+		// If text file, process with PSNAP code
+		if(fileType.indexOf('txt') !== -1 || ext === 'txt') {	
+			// Create global variable for this file and its size
+			var globals = target.parentThatIsA(IDE_Morph).globalVariables, 
+			vName = 'file pointer';
+			vSize = 'file size';
+			vFile = 'file';
+
+			// REVISIT: Right now, assuming only one file can be imported at a time
+			// (preexisting files will get written over when a new one is imported)
+			globals.addVar(vName);
+			globals.setVar(vName, 0);
+			globals.addVar(vSize);
+			globals.setVar(vSize, aFile.size);
+			globals.addVar(vFile);
+			globals.setVar(vFile, aFile); 
+
+			target.droppedData(aFile);
+		}
+		// Otherwise, process normally with new Snap code
+		else {
+			frd.readAsText(aFile);
+		}
+	}
 
     function readBinary(aFile) {
         var frd = new FileReader();
