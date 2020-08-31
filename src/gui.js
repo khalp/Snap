@@ -1600,7 +1600,6 @@ IDE_Morph.prototype.createSpriteBar = function () {
     tab.labelShadowOffset = new Point(-1, -1);
     tab.labelShadowColor = tabColors[1];
     tab.labelColor = this.buttonLabelColor;
-    tab.drawNew();
     tab.fixLayout();
     tabBar.add(tab);
 	// </PSNAP>
