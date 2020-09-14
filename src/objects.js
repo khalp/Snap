@@ -1416,6 +1416,11 @@ SpriteMorph.prototype.initBlocks = function () {
             category: 'other',
             spec: 'code of %cmdRing'
         },
+		downloadCodeFile: {
+			type: 'command',
+			category: 'other',
+			spec: 'download %code as file'
+		},
 
         // Video motion
         doSetVideoTransparency: {
@@ -2707,7 +2712,8 @@ SpriteMorph.prototype.blockTemplates = function (category) {
             blocks.push(block('doMapListCode'));
             blocks.push('-');
             blocks.push(block('reportMappedCode'));
-            blocks.push('=');
+            blocks.push(block('downloadCodeFile'));
+			blocks.push('=');
         }
 
         blocks.push(this.makeBlockButton());
@@ -8701,6 +8707,7 @@ StageMorph.prototype.blockTemplates = function (category) {
             blocks.push(block('doMapListCode'));
             blocks.push('-');
             blocks.push(block('reportMappedCode'));
+			blocks.push(block('downloadCodeFile'));
             blocks.push('=');
         }
 

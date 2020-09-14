@@ -5367,6 +5367,32 @@ Process.prototype.reportMappedCode = function (aContext) {
     return '';
 };
 
+Process.prototype.downloadCodeFile = function (code) {
+	var ide = this.homeContext.receiver.parentThatIsA(IDE_Morph);
+	ide.saveFileAs(
+		this.wrapCCode(code),
+		'text/c;charset=utf-8',
+		'script'
+    );
+};
+
+Process.prototype.wrapCCode = function (code) {
+	// private - used to wrap script in main function and apply import statements
+	const imports = '#include <stdio.h>\n#include <string.h>\n#include "omp.h"\n';
+	const mainHeader = 'int main()\n{\n';
+	const returnStatement = '\treturn (0);\n}';
+	var lines = code.toString().split('\n');
+	var formattedCode = '';
+	
+	var k;
+	for(k = 0; k < lines.length; k++) {
+		var nextLine = '\t' + lines[k].toString() + '\n';
+		formattedCode = formattedCode.concat(nextLine);
+	}
+	
+	return imports + mainHeader + formattedCode + returnStatement;
+};
+
 // Process music primitives
 
 Process.prototype.doRest = function (beats) {
