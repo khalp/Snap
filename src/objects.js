@@ -337,6 +337,13 @@ SpriteMorph.prototype.initBlocks = function () {
             spec: 'say %s',
             defaults: [localize('Hello!')]
         },
+		doSayVar: {
+			only: SpriteMorph,
+            type: 'command',
+            category: 'looks',
+            spec: 'say %s then %n',
+            defaults: [localize('My variable value is: '), null]
+		},
         doThinkFor: {
             only: SpriteMorph,
             type: 'command',
@@ -834,6 +841,11 @@ SpriteMorph.prototype.initBlocks = function () {
             category: 'other',
             spec: 'warp %c'
         },
+		doParallel: {
+			type: 'command',
+			category: 'control',
+			spec: 'parallel %loop'
+		},
 
         // Message passing
         doTellTo: {
@@ -1420,6 +1432,16 @@ SpriteMorph.prototype.initBlocks = function () {
 			type: 'command',
 			category: 'other',
 			spec: 'download %code as file'
+		},
+		threadNum: {
+			type: 'reporter',
+            category: 'other',
+            spec: 'thread num'
+		},
+		numThreads: {
+			type: 'reporter',
+			category: 'other',
+			spec: 'number of threads'
 		},
 
         // Video motion
@@ -2264,6 +2286,7 @@ SpriteMorph.prototype.blockTemplates = function (category) {
         blocks.push('-');
         blocks.push(block('doSayFor'));
         blocks.push(block('bubble'));
+		blocks.push(block('doSayVar'));
         blocks.push(block('doThinkFor'));
         blocks.push(block('doThink'));
         blocks.push('-');
@@ -2412,7 +2435,8 @@ SpriteMorph.prototype.blockTemplates = function (category) {
         blocks.push(block('doRepeat'));
         blocks.push(block('doUntil'));
         blocks.push(block('doFor'));
-        blocks.push('-');
+		blocks.push(block('doParallel'));
+		blocks.push('-');
         blocks.push(block('doIf'));
         blocks.push(block('doIfElse'));
         blocks.push(block('reportIfElse'));
@@ -2713,6 +2737,8 @@ SpriteMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportMappedCode'));
             blocks.push(block('downloadCodeFile'));
+			blocks.push(block('threadNum'));
+			blocks.push(block('numThreads'));
 			blocks.push('=');
         }
 
@@ -5095,6 +5121,11 @@ SpriteMorph.prototype.stopTalking = function () {
 
 SpriteMorph.prototype.doThink = function (data) {
     this.bubble(data, true);
+};
+
+SpriteMorph.prototype.doSayVar= function (data, variable) {
+	var message = data + variable.toString();
+    this.bubble(message);
 };
 
 SpriteMorph.prototype.bubble = function (data, isThought, isQuestion) {
@@ -8431,7 +8462,8 @@ StageMorph.prototype.blockTemplates = function (category) {
         blocks.push(block('doRepeat'));
         blocks.push(block('doUntil'));
         blocks.push(block('doFor'));
-        blocks.push('-');
+        blocks.push(block('doParallel'));
+		blocks.push('-');
         blocks.push(block('doIf'));
         blocks.push(block('doIfElse'));
         blocks.push(block('reportIfElse'));
@@ -8708,6 +8740,8 @@ StageMorph.prototype.blockTemplates = function (category) {
             blocks.push('-');
             blocks.push(block('reportMappedCode'));
 			blocks.push(block('downloadCodeFile'));
+			blocks.push(block('threadNum'));
+			blocks.push(block('numThreads'));
             blocks.push('=');
         }
 

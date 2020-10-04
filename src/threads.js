@@ -2459,6 +2459,14 @@ Process.prototype.doWaitUntil = function (goalCondition) {
     this.pushContext();
 };
 
+Process.prototype.doParallel = function(body) {
+    this.pushContext('doYield');
+    if (body) {
+        this.pushContext(body.blockSequence());
+    }
+    this.pushContext();
+}
+
 // Process interpolated iteration primitives
 
 Process.prototype.doForEach = function (upvar, list, script) {
@@ -5391,6 +5399,16 @@ Process.prototype.wrapCCode = function (code) {
 	}
 	
 	return imports + mainHeader + formattedCode + returnStatement;
+};
+
+Process.prototype.threadNum = function(varName) {
+	// OpenMP call will be in code mapping
+	return 1;
+};
+
+Process.prototype.numThreads = function() {
+	// OpenMP call will be in code mapping
+	return 1;
 };
 
 // Process music primitives
